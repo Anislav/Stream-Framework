@@ -39,6 +39,8 @@ class AggregatedActivitySerializer(BaseAggregatedSerializer):
         for date_field in self.date_fields:
             value = getattr(aggregated, date_field)
             epoch = datetime_to_epoch(value) if value is not None else -1
+            # keep the milliseconds
+            epoch = '%.6f' % epoch
             parts += [epoch]
 
         # add the activities serialization
