@@ -8,6 +8,7 @@ from stream_framework.utils import get_metrics_instance
 from stream_framework.utils.timing import timer
 import logging
 from stream_framework.feeds.redis import RedisFeed
+from stream_framework.feeds.notification_feed.redis import RedisNotificationFeed
 
 
 logger = logging.getLogger(__name__)
@@ -95,6 +96,9 @@ class Manager(object):
     )
     # : the user feed class (it stores the latest activity by one user)
     user_feed_class = UserBaseFeed
+
+    # : used to store notifications (aggregated activities) for one user
+    notification_feed_class = RedisNotificationFeed
 
     # : the number of activities which enter your feed when you follow someone
     follow_activity_limit = 5000
@@ -195,6 +199,14 @@ class Manager(object):
         :param user_id: the id of the user
         '''
         return self.user_feed_class(user_id)
+
+    def get_notification_feed(self, user_id):
+        '''
+        feed where notifications (aggregated activities) for :user_id are stored
+
+        :param user_id: the id of the user
+        '''
+        return self.notification_feed_class(user_id)
 
     def update_user_activities(self, activities):
         '''
