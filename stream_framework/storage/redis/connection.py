@@ -33,3 +33,24 @@ def setup_redis():
         )
         pools[name] = pool
     return pools
+
+
+class RedisConnectionMixin(object):
+
+    @property
+    def redis(self):
+        '''
+        Lazy loads the redis connection
+        '''
+        try:
+            return self._redis
+        except AttributeError:
+            self._redis = get_redis_connection()
+            return self._redis
+
+    @redis.setter
+    def set_redis(self, redis):
+        '''
+        Sets redis connection
+        '''
+        self._redis = redis

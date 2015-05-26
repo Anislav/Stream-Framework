@@ -1,10 +1,10 @@
 from stream_framework.storage.base_lists_storage import BaseListsStorage
-from stream_framework.storage.redis.connection import get_redis_connection
+from stream_framework.storage.redis.connection import RedisConnectionMixin
 
 import six
 
 
-class RedisListsStorage(BaseListsStorage):
+class RedisListsStorage(RedisConnectionMixin, BaseListsStorage):
 
     def _to_result(self, results):
         if results:
@@ -12,17 +12,6 @@ class RedisListsStorage(BaseListsStorage):
                 return results[0]
             else:
                 return tuple(results)
-
-    @property
-    def redis(self):
-        '''
-        Lazy load the redis connection
-        '''
-        try:
-            return self._redis
-        except AttributeError:
-            self._redis = get_redis_connection()
-            return self._redis
 
     def get_keys(self, list_names):
         return [self.get_key(list_name) for list_name in list_names]
