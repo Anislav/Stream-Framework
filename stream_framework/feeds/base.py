@@ -1,5 +1,6 @@
 import copy
 import random
+from datetime import datetime
 
 from stream_framework.serializers.base import BaseSerializer
 from stream_framework.serializers.simple_timeline_serializer import \
@@ -103,6 +104,9 @@ class BaseFeed(object):
     # : the class the timline storage should use for serialization
     timeline_serializer = SimpleTimelineSerializer
 
+    # : if set this class is used to notify about feed's changes in realtime
+    transport_class = None
+
     # : the chance that we trim the feed, the goal is not to keep the feed
     # : at exactly max length, but make sure we don't grow to infinite size :)
     trim_chance = 0.01
@@ -121,6 +125,9 @@ class BaseFeed(object):
 
         self.timeline_storage = self.get_timeline_storage()
         self.activity_storage = self.get_activity_storage()
+
+        if self.transport_class is not None:
+            self.transport = self.transport_class(self.key)
 
         # ability to filter and change ordering (not supported for all
         # backends)
@@ -232,11 +239,18 @@ class BaseFeed(object):
         self.on_update_feed(new=[], deleted=activity_ids)
         return del_count
 
+    def get_activity_ids(self, activities):
+        return [activity.serialization_id for activity in activities]
+
     def on_update_feed(self, new, deleted):
         '''
-        A hook called when activities area created or removed from the feed
+        This method is called when activities are created or removed from the feed.
+        In case a transport_class is set, it notifies about feed's changes.
         '''
-        pass
+        if self.transport_class is not None:
+            self.transport.send_data(dict(new=self.get_activity_ids(new),
+                                          deleted=self.get_activity_ids(deleted),
+                                          published_at=datetime.utcnow()))
 
     def trim(self, length=None):
         '''
